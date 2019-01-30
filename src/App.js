@@ -1,137 +1,137 @@
 import React, { Component } from "react";
 import DateTimePicker from "react-datetime-picker";
+import { Button, Modal } from "react-bootstrap";
 
-import logo from "./logo.svg";
+import "videojs-contrib-hls";
+
+import VideoPlayer from "./VideoPlayer";
+
+import axios from "./api";
 import "./App.css";
 
 class App extends Component {
   constructor() {
     super();
     this.state = {
-      videos: [
-        {
-          poster:
-            "http://www.webestools.com/page/media/videoTag/BigBuckBunny.png",
-          url:
-            "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4"
-        }
-      ],
+      url:
+        "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4",
       cars: [
         {
-          modal: "Car1"
+          carId: "Car1"
         },
         {
-          modal: "Car2"
+          carId: "Car2"
         }
       ],
-      selectedDate: {
-        startDate: new Date(),
-        endDate: new Date()
+      selectedVideo: {
+        carid: "",
+        startDate: null,
+        endDate: null
       },
-      selectedVideo:
-        "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4"
+      show: false
     };
-
-    this.defaultVideoPoster = this.state.videos[0].poster;
-    this.defaultVideo = this.state.videos[0].url;
   }
 
-  // fetchVideo(video) {
-  //   this.setState({selectedVideo: video})
-  // }
+  handleClose = () => {
+    this.setState({ show: false });
+  };
+
+  handleShow = carId => {
+    this.setState({
+      show: true,
+      selectedVideo: {
+        ...this.state.selectedVideo,
+        carid: carId,
+        startDate: null,
+        endDate: null
+      }
+    });
+  };
 
   onChange(date, type) {
     if (type === "startDate") {
       this.setState({
-        selectedDate: { ...this.state.selectedDate, startDate: date }
+        selectedVideo: { ...this.state.selectedVideo, startDate: date }
       });
     } else if (type === "endDate") {
       this.setState({
-        selectedDate: { ...this.state.selectedDate, endDate: date }
+        selectedVideo: { ...this.state.selectedVideo, endDate: date }
       });
     }
   }
 
-  onWatchVideo() {
-    console.log("fn", this.state);
-  }
+  onWatchVideo = async () => {
+    const config = { headers: { "Content-Type": "application/json" } };
+
+    const response = await axios.put(
+      "https://znj756ajji.execute-api.us-east-1.amazonaws.com/prototype",
+      this.state.selectedVideo,
+      config
+    );
+    this.setState({ url: response.data.videourl, show: false });
+  };
 
   renderCarRow() {
     return this.state.cars.map((car, i) => {
       return (
         <tr key={i}>
           <th scope="row" style={{ textAlign: "left" }}>
-            {car.modal}
+            {car.carId}
           </th>
           <td>
-            <button
-              className="btn btn-success mb-2"
-              type="button"
-              data-toggle="modal"
-              data-target={"#" + car.modal}
+            <Button
+              variant="success"
+              onClick={() => this.handleShow(car.carId)}
             >
               View
-            </button>
-            <div className="modal fade" id={car.modal} tabIndex="-1">
-              <div
-                className="modal-dialog modal-dialog-centered"
-                role="document"
-              >
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title">Fill time slot</h5>
-                    <button
-                      type="button"
-                      className="close"
-                      data-dismiss="modal"
-                      aria-label="Close"
-                    >
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-                  <div className="modal-body">
-                    <div className="dropdown d-flex mb-1">
-                      <label className="mr-2" style={{ width: "100px" }}>
-                        Start Date
-                      </label>
-                      <DateTimePicker
-                        onChange={date => {
-                          this.onChange(date, "startDate");
-                        }}
-                        value={this.state.selectedDate.startDate}
-                      />
-                    </div>
-                    <div className="dropdown d-flex mb-1">
-                      <label className="mr-2" style={{ width: "100px" }}>
-                        End Date
-                      </label>
-                      <DateTimePicker
-                        onChange={date => {
-                          this.onChange(date, "endDate");
-                        }}
-                        value={this.state.selectedDate.endDate}
-                      />
-                    </div>
-                  </div>
-                  <div className="modal-footer">
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      data-dismiss="modal"
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={() => this.onWatchVideo()}
-                    >
-                      View Video
-                    </button>
-                  </div>
+            </Button>
+
+            <Modal show={this.state.show} onHide={this.handleClose}>
+              <Modal.Header closeButton>
+                <Modal.Title>Fill time slot of {car.carId}</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                <div className="mb-2">
+                  <label className="mr-2" style={{ width: "100px" }}>
+                    Start Date
+                  </label>
+                  <DateTimePicker
+                    onChange={date => {
+                      this.onChange(date, "startDate");
+                    }}
+                    value={this.state.selectedVideo.startDate}
+                  />
                 </div>
-              </div>
-            </div>
+                <div>
+                  <label className="mr-2" style={{ width: "100px" }}>
+                    End Date
+                  </label>
+                  <DateTimePicker
+                    onChange={date => {
+                      this.onChange(date, "endDate");
+                    }}
+                    value={this.state.selectedVideo.endDate}
+                  />
+                </div>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" onClick={this.handleClose}>
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={this.onWatchVideo}
+                  disabled={
+                    this.state.selectedVideo.startDate &&
+                    this.state.selectedVideo.endDate
+                      ? false
+                      : true
+                  }
+                >
+                  Save Changes
+                </Button>
+              </Modal.Footer>
+            </Modal>
           </td>
         </tr>
       );
@@ -139,6 +139,7 @@ class App extends Component {
   }
 
   render() {
+    console.log("render", this.state.url);
     return (
       <div className="App">
         <header>
@@ -195,18 +196,17 @@ class App extends Component {
             <div className="container">
               <div className="row justify-content-center align-items-center">
                 <div className="col-lg-12">
-                  <video
-                    controls
-                    poster={this.defaultVideoPoster}
-                    style={{ width: 100 + "%" }}
-                  >
-                    <source src={this.defaultVideo} type="video/mp4" />
+                  {/* <VideoPlayer {...this.videoJsOptions} /> */}
+
+                  {/* <video controls style={{ width: 100 + "%" }}>
+                    <source src={this.state.url} type="video/mp4" />
                     Your browser does not support the video tag or the file
                     format of this video.{" "}
                     <a href="http://www.webestools.com/">
                       http://www.webestools.com/
                     </a>
-                  </video>
+                  </video> */}
+                  <VideoPlayer videoUrl={this.state.url} />
                 </div>
               </div>
             </div>
