@@ -1,17 +1,37 @@
 import React from "react";
 
 export default class VideoPlayer extends React.Component {
-  componentDidMount() {}
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.videoUrl != this.props.videoUrl) {
+      this.refs["videoPlayer"].firstChild.src = this.props.videoUrl;
+      this.refs["videoPlayer"].load();
+      console.log("nextPropssssss");
+    }
+  }
+
+  // componentDidUpdate() {
+  //   this.refs["videoPlayer"].firstChild.src = this.props.videoUrl;
+  //   this.refs["videoPlayer"].load();
+  // }
+
+  renderSrc(url) {
+    return <source src={url} type="application/x-mpegURL" />;
+  }
 
   render() {
     return (
       <div>
-        {/* <video ref={node => (this.videoNode = node)} className="video-js" /> */}
-        <video key={this.props.videoUrl} controls style={{ width: 100 + "%" }}>
-          <source src={this.props.videoUrl} type="video/mp4" />
-          Your browser does not support the video tag or the file format of this
-          video.{" "}
-          <a href="http://www.webestools.com/">http://www.webestools.com/</a>
+        <video
+          ref="videoPlayer"
+          id="my_video_1"
+          className="video-js vjs-default-skin"
+          controls
+          preload="auto"
+          width="1100"
+          height="300"
+          data-setup="{}"
+        >
+          <source src={this.props.videoUrl} type="application/x-mpegURL" />
         </video>
       </div>
     );

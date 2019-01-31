@@ -2,19 +2,19 @@ import React, { Component } from "react";
 import DateTimePicker from "react-datetime-picker";
 import { Button, Modal } from "react-bootstrap";
 
-import "videojs-contrib-hls";
-
-import VideoPlayer from "./VideoPlayer";
+// import videojs from "video.js";
+// import "videojs-contrib-hls";
 
 import axios from "./api";
 import "./App.css";
+import VideoPlayer from "./VideoPlayer";
 
 class App extends Component {
   constructor() {
     super();
     this.state = {
       url:
-        "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4",
+        "http://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8",
       cars: [
         {
           carId: "Car1"
@@ -25,11 +25,22 @@ class App extends Component {
       ],
       selectedVideo: {
         carid: "",
-        startDate: null,
-        endDate: null
+        carStream: "DemoVideoStream",
+        startDate: new Date(),
+        endDate: new Date()
       },
       show: false
     };
+  }
+
+  dateFormater(dateObj) {
+    const time = dateObj.toLocaleTimeString("it-IT");
+    const date = dateObj.toLocaleDateString("ja", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    return `${date} ${time}`;
   }
 
   handleClose = () => {
@@ -38,17 +49,21 @@ class App extends Component {
 
   handleShow = carId => {
     this.setState({
-      show: true,
-      selectedVideo: {
-        ...this.state.selectedVideo,
-        carid: carId,
-        startDate: null,
-        endDate: null
-      }
+      show: true
     });
+    // this.setState({
+    //   show: true,
+    //   selectedVideo: {
+    //     ...this.state.selectedVideo,
+    //     carid: carId,
+    //     startDate: null,
+    //     endDate: null
+    //   }
+    // });
   };
 
   onChange(date, type) {
+    console.log(date);
     if (type === "startDate") {
       this.setState({
         selectedVideo: { ...this.state.selectedVideo, startDate: date }
@@ -62,13 +77,25 @@ class App extends Component {
 
   onWatchVideo = async () => {
     const config = { headers: { "Content-Type": "application/json" } };
+    // const data = this.state.selectedVideo;
+    const customData = {
+      carId: "DemoVideoStream",
+      carStream: "Car1",
+      startDate: this.state.selectedVideo.startDate.toString(),
+      endDate: this.state.selectedVideo.endDate.toString()
+    };
 
     const response = await axios.put(
-      "https://znj756ajji.execute-api.us-east-1.amazonaws.com/prototype",
-      this.state.selectedVideo,
+      "https://5yoo6hgmk5.execute-api.us-east-1.amazonaws.com/prototype",
+      customData,
       config
     );
-    this.setState({ url: response.data.videourl, show: false });
+
+    console.log(customData);
+    console.log("response", response);
+    let vUrl = response.data.HLSStreamingSessionURL;
+
+    this.setState({ url: vUrl, show: false });
   };
 
   renderCarRow() {
@@ -138,6 +165,12 @@ class App extends Component {
     });
   }
 
+  videoRender(url) {
+    if (url) {
+      return <VideoPlayer videoUrl={url} />;
+    }
+  }
+
   render() {
     console.log("render", this.state.url);
     return (
@@ -196,7 +229,18 @@ class App extends Component {
             <div className="container">
               <div className="row justify-content-center align-items-center">
                 <div className="col-lg-12">
-                  {/* <VideoPlayer {...this.videoJsOptions} /> */}
+                  {/* <video
+                    id="my_video_1"
+                    className="video-js vjs-default-skin"
+                    controls
+                    preload="auto"
+                    width="1100"
+                    height="300"
+                    data-setup="{}"
+                    key={this.state.url}
+                  >
+                    <source src={this.state.url} type="application/x-mpegURL" />
+                  </video> */}
 
                   {/* <video controls style={{ width: 100 + "%" }}>
                     <source src={this.state.url} type="video/mp4" />
@@ -206,6 +250,7 @@ class App extends Component {
                       http://www.webestools.com/
                     </a>
                   </video> */}
+                  {/* {this.videoRender(this.state.url)} */}
                   <VideoPlayer videoUrl={this.state.url} />
                 </div>
               </div>
