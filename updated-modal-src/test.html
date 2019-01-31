@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  </head>
+  <body>
+    <script>
+      var data1 = {
+        carid: "car1",
+        startdate: "3243",
+        enddate: "3432"
+      };
+      fetch(
+        "https://znj756ajji.execute-api.us-east-1.amazonaws.com/prototype",
+        {
+          method: "put",
+          mode: "cors",
+          credentials: "same-origin",
+          body: JSON.stringify(data1)
+        }
+      ).then(data => {
+        console.log("ss");
+      });
+    </script>
+  </body>
+</html>

@@ -1,15 +1,18 @@
+import "./App.css";
 import React, { Component } from "react";
 import DateTimePicker from "react-datetime-picker";
 import { Button, Modal } from "react-bootstrap";
-import axios from "./api";
-import "./App.css";
-import videojs from "video.js";
+
+import VideoPlayer from "./components/VideoPlayer";
+import axios from "./apis/streamingApi";
+import StreamVideoEditModal from "./components/StreamVideoEditModal";
 
 class App extends Component {
   constructor() {
     super();
     this.state = {
-      url: null,
+      url:
+        "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4",
       cars: [
         {
           carId: "Car1"
@@ -20,31 +23,11 @@ class App extends Component {
       ],
       selectedVideo: {
         carid: "",
-        carStream: "DemoVideoStream",
-        startDate: new Date(),
-        endDate: new Date()
+        startDate: null,
+        endDate: null
       },
       show: false
     };
-  }
-
-  componentDidMount() {
-    var player = videojs("my-video");
-    player.src({
-      src:
-        "http://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8",
-      type: "application/x-mpegURL"
-    });
-  }
-
-  dateFormater(dateObj) {
-    const time = dateObj.toLocaleTimeString("it-IT");
-    const date = dateObj.toLocaleDateString("ja", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    });
-    return `${date} ${time}`;
   }
 
   handleClose = () => {
@@ -52,19 +35,18 @@ class App extends Component {
   };
 
   handleShow = carId => {
-    // this.setState({
-    //   show: true
-    // });
     this.setState({
       show: true,
       selectedVideo: {
         ...this.state.selectedVideo,
-        carid: carId
+        carid: carId,
+        startDate: null,
+        endDate: null
       }
     });
   };
 
-  onChange(date, type) {
+  onChange = (date, type) => {
     if (type === "startDate") {
       this.setState({
         selectedVideo: { ...this.state.selectedVideo, startDate: date }
@@ -74,37 +56,17 @@ class App extends Component {
         selectedVideo: { ...this.state.selectedVideo, endDate: date }
       });
     }
-  }
+  };
 
   onWatchVideo = async () => {
     const config = { headers: { "Content-Type": "application/json" } };
-    const customData = {
-      carId: "DemoVideoStream",
-      carStream: this.state.selectedVideo.carid,
-      startDate: this.state.selectedVideo.startDate.toString(),
-      endDate: this.state.selectedVideo.endDate.toString()
-    };
-    try {
-      const response = await axios.put(
-        "https://5yoo6hgmk5.execute-api.us-east-1.amazonaws.com/prototype",
-        customData,
-        config
-      );
-
-      if (response.data.errorMessage) {
-        throw response.data.errorMessage;
-      } else {
-        let vUrl = response.data.HLSStreamingSessionURL;
-        this.setState({ url: vUrl, show: false });
-        var player = videojs("my-video");
-        player.src({
-          src: this.state.url,
-          type: "application/x-mpegURL"
-        });
-      }
-    } catch (error) {
-      alert(error);
-    }
+    console.log("onwatchVideo", this);
+    const response = await axios.put(
+      "https://znj756ajji.execute-api.us-east-1.amazonaws.com/prototype",
+      this.state.selectedVideo,
+      config
+    );
+    this.setState({ url: response.data.videourl, show: false });
   };
 
   renderCarRow() {
@@ -121,8 +83,16 @@ class App extends Component {
             >
               View
             </Button>
+            <StreamVideoEditModal
+              show={this.state.show}
+              onHide={this.handleClose}
+              car={car}
+              onChange={this.onChange}
+              state={this.state}
+              context={this}
+            />
 
-            <Modal show={this.state.show} onHide={this.handleClose}>
+            {/* <Modal show={this.state.show} onHide={this.handleClose}>
               <Modal.Header closeButton>
                 <Modal.Title>Fill time slot of {car.carId}</Modal.Title>
               </Modal.Header>
@@ -167,7 +137,7 @@ class App extends Component {
                   Save Changes
                 </Button>
               </Modal.Footer>
-            </Modal>
+            </Modal> */}
           </td>
         </tr>
       );
@@ -231,14 +201,17 @@ class App extends Component {
             <div className="container">
               <div className="row justify-content-center align-items-center">
                 <div className="col-lg-12">
-                  <video
-                    id="my-video"
-                    className="video-js vjs-default-skin"
-                    controls
-                    preload="auto"
-                    style={{ width: 100 + "%" }}
-                    data-setup="{}"
-                  />
+                  {/* <VideoPlayer {...this.videoJsOptions} /> */}
+
+                  {/* <video controls style={{ width: 100 + "%" }}>
+                    <source src={this.state.url} type="video/mp4" />
+                    Your browser does not support the video tag or the file
+                    format of this video.{" "}
+                    <a href="http://www.webestools.com/">
+                      http://www.webestools.com/
+                    </a>
+                  </video> */}
+                  <VideoPlayer videoUrl={this.state.url} />
                 </div>
               </div>
             </div>
